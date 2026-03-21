@@ -1,0 +1,14 @@
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
+
+  // AI loads ONLY when user explicitly clicks — never auto-fires on mount
+  const loadAIRecommendations = async () => {
+    if (!currentStore || medicines.length === 0) return;
+    setLoadingRecs(true);
+    try { const recs = await getAIRecommendation(medicines, batches); setAiRecs(recs); }
+    catch (e: any) {
+      const msg = e?.message || '';
+      console.error('AI recs error:', msg.includes('429') ? 'Rate limit hit' : e);
+    }
+    finally { setLoadingRecs(false); }
+  };
+  // ↑ No useEffect auto-trigger here

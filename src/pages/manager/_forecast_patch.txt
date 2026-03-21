@@ -1,0 +1,14 @@
+  const loadForecast = async () => {
+    if (!currentStore || medicines.length === 0) return;
+    setLoadingForecast(true);
+    try {
+      const result = await getInventoryForecast(medicines, []);
+      if (result?.length) setForecasts(result as MLForecast[]);
+    } catch (e) {
+      console.error('Forecast error:', e);
+    } finally {
+      setLoadingForecast(false);
+    }
+  };
+
+  // NOTE: No auto-fire — user must click Refresh to avoid burning quota

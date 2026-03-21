@@ -1,0 +1,23 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+
+# Environment — never commit
+.env
+.env.local
+.env.production
+
+# Firebase config with real keys — use .env instead
+firebase-applet-config.json
+
+# Service account key — NEVER commit this
+serviceAccountKey.json
+service-account.json
+firebase-service-account.json
+*serviceAccount*.json
+*service-account*.json
+
+# Keep examples
+!.env.example

@@ -1,0 +1,8 @@
+{
+  "name": "Veda",
+  "description": "Precision inventory for the medicines that matter. A government hospital pharmacy management system with AI-powered forecasting and FEFO dispensing.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

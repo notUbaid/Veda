@@ -1,0 +1,185 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information including role and assigned store.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["pharmacist", "manager", "admin"] },
+        "storeId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["uid", "email", "name", "role"]
+    },
+    "Store": {
+      "title": "Store",
+      "description": "Information about a pharmacy store.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "hospitalName": { "type": "string" },
+        "contact": { "type": "string" },
+        "managerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "location"]
+    },
+    "Medicine": {
+      "title": "Medicine",
+      "description": "General medicine definition.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "genericName": { "type": "string" },
+        "category": { "type": "string" },
+        "unit": { "type": "string" },
+        "unitPrice": { "type": "number" },
+        "reorderThreshold": { "type": "integer" },
+        "leadTimeDays": { "type": "integer" },
+        "supplier": { "type": "string" },
+        "storeId": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["name", "category", "unit", "storeId"]
+    },
+    "Batch": {
+      "title": "Batch",
+      "description": "A specific batch of a medicine in a store.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "medicineId": { "type": "string" },
+        "storeId": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "originalQuantity": { "type": "integer" },
+        "expiryDate": { "type": "string", "format": "date" },
+        "purchasePrice": { "type": "number" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "aisle": { "type": "string" },
+            "row": { "type": "string" },
+            "shelf": { "type": "string" },
+            "compartment": { "type": "string" }
+          }
+        },
+        "receivedAt": { "type": "string", "format": "date-time" },
+        "isDepleted": { "type": "boolean" },
+        "isDisposed": { "type": "boolean" }
+      },
+      "required": ["medicineId", "storeId", "batchNumber", "quantity", "expiryDate"]
+    },
+    "DispenseLog": {
+      "title": "DispenseLog",
+      "description": "Log of medicine dispensing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "storeId": { "type": "string" },
+        "medicineId": { "type": "string" },
+        "batchId": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "unitPrice": { "type": "number" },
+        "totalValue": { "type": "number" },
+        "patientRef": { "type": "string" },
+        "dispensedBy": { "type": "string" },
+        "dispensedAt": { "type": "string", "format": "date-time" },
+        "fefoCompliant": { "type": "boolean" },
+        "billId": { "type": "string" }
+      },
+      "required": ["storeId", "medicineId", "batchId", "quantity", "dispensedBy"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Procurement order for medicines.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "storeId": { "type": "string" },
+        "medicineId": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "unitPrice": { "type": "number" },
+        "totalValue": { "type": "number" },
+        "supplier": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "dispatched", "delivered", "cancelled"] },
+        "urgency": { "type": "string", "enum": ["critical", "urgent", "routine"] },
+        "aiSuggested": { "type": "boolean" },
+        "orderedAt": { "type": "string", "format": "date-time" },
+        "expectedDelivery": { "type": "string", "format": "date" },
+        "approvalStatus": { "type": "string", "enum": ["auto", "pending", "approved", "rejected"] }
+      },
+      "required": ["storeId", "medicineId", "quantity", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System notification for users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "storeId": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["critical", "warning", "info"] },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "medicineId": { "type": "string" },
+        "batchId": { "type": "string" },
+        "orderId": { "type": "string" }
+      },
+      "required": ["userId", "title", "message", "urgency"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable log of system actions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "storeId": { "type": "string" },
+        "action": { "type": "string" },
+        "entityType": { "type": "string" },
+        "entityId": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userEmail", "action", "entityType", "timestamp"]
+    },
+    "WasteRecord": {
+      "title": "WasteRecord",
+      "description": "Record of medicine waste/disposal.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "storeId": { "type": "string" },
+        "medicineId": { "type": "string" },
+        "batchId": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "wasteValue": { "type": "number" },
+        "reason": { "type": "string" },
+        "recordedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storeId", "medicineId", "batchId", "quantity", "reason"]
+    }
+  },
+  "firestore": {
+    "users": { "schema": "UserProfile", "description": "User profiles" },
+    "stores": { "schema": "Store", "description": "Pharmacy stores" },
+    "medicines": { "schema": "Medicine", "description": "Medicine definitions" },
+    "batches": { "schema": "Batch", "description": "Medicine batches" },
+    "dispense_logs": { "schema": "DispenseLog", "description": "Dispensing logs" },
+    "orders": { "schema": "Order", "description": "Procurement orders" },
+    "notifications": { "schema": "Notification", "description": "User notifications" },
+    "audit_logs": { "schema": "AuditLog", "description": "System audit logs" },
+    "waste_records": { "schema": "WasteRecord", "description": "Waste records" }
+  }
+}
