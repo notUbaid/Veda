@@ -1,115 +1,249 @@
-# 🏥 VEDA — Pharmacy Intelligence System
+<p align="center">
+  <img src="static/assets/logo.png" width="80" />
+</p>
 
-> Precision inventory management for government hospital pharmacies.  
-> FEFO dispensing · AI demand forecasting · Multi-store · Role-based access
+<h1 align="center">Veda</h1>
+
+Smart Pharmacy Intelligence. Real-time tracking, AI-driven expiry alerts, and optimized inventory for the next generation of healthcare.
 
 ---
 
-## Quick Start
+## 🚀 Overview
 
-### 1. Install dependencies
+**Veda** is a next-generation **AI-powered hospital pharmacy management system** designed to eliminate drug wastage, prevent stockouts, and optimize inventory across government healthcare systems.
+
+Built with real world hospital workflows in mind, Veda ensures:
+
+* **Zero expired medicines**
+* **Smart inventory tracking**
+* **Automated decision-making using data**
+
+---
+
+## 🎯 Problem Statement
+
+Government hospital pharmacies often face:
+
+* ❌ Drug expiry due to poor tracking
+* ❌ Stockouts during critical demand
+* ❌ Manual inventory management errors
+* ❌ Lack of visibility across stores
+
+**Veda solves all of these with precision, automation, and intelligence.**
+
+---
+
+## 🏥 Core Modules
+
+### 👨‍⚕️ Pharmacist Dashboard
+
+* Real-time inventory visibility (batch-level)
+* **FEFO-based dispensing system**
+* Smart billing with auto batch selection
+* Expiry alerts + AI recommendations
+* Low stock alerts with reorder triggers
+* Location-aware stock navigation (Row / Shelf / Compartment)
+* Quick query assistant (chat-style)
+
+---
+
+### 🧑‍💼 Store Manager Dashboard
+
+* Multi-store inventory control
+* Expiry timeline & waste analytics (₹)
+* Smart **AI-powered reorder system**
+* Batch-level stock receiving
+* Order lifecycle tracking (Ordered → Delivered)
+* Financial insights (procurement, waste, turnover)
+
+---
+
+### 🏛️ Admin Dashboard
+
+* Centralized hospital-level monitoring
+* Cross-store analytics & comparisons
+* Emergency drug requisition system
+* Procurement approval workflow
+* Staff & role management
+* Full audit logs for compliance
+
+<p align="center">
+  <img src="static/assets/Architecture.png" />
+</p>
+---
+
+## 🤖 Intelligence Layer
+
+### 🔬 Smart Recommendations (Pharmacist)
+
+* Daily AI suggestions for dispensing priority
+* Batch-level expiry risk detection
+
+### 📦 Demand Forecasting (Manager)
+
+* Linear regression-based consumption prediction
+* Seasonal adjustments (monsoon, winter trends)
+* Stockout prediction & overstock warnings
+
+### 🧠 System Intelligence (Admin)
+
+* Waste pattern analysis
+* Store efficiency scoring
+* Cross-store imbalance detection
+
+---
+
+## 🔔 Notification System
+
+* Expiry alerts (color-coded urgency)
+* Low stock warnings
+* Reorder reminders (Pharmacist → Manager)
+* Critical recall alerts
+* Outbreak-based stock recommendations
+* In-app notification center
+
+---
+
+## ⚙️ Tech Stack
+
+| Layer    | Technology                              |
+| -------- | --------------------------------------- |
+| Frontend | React + Vite + Tailwind + Framer Motion |
+| Backend  | Flask (Python)                        |
+| Database | Firebase Firestore                      |
+| Auth     | Firebase Authentication                 |
+| AI/ML    | Gemini 1.5 Flash + Linear Regression    |
+| Charts   | Recharts                                |
+| PDF      | jsPDF                                   |
+| Hosting  | Firebase Hosting                        |
+
+---
+
+## 🧩 Architecture
+
 ```bash
-npm install
+User Action
+   ↓
+Frontend (React Dashboard)
+   ↓
+Firebase (Auth + Firestore Realtime)
+   ↓
+FastAPI Backend (ML + Logic + PDF)
+   ↓
+AI Layer (Forecasting + Recommendations)
+   ↓
+Notifications & UI Updates
 ```
 
-### 2. Configure environment
-Your `.env` file should already have the Firebase credentials. If not, copy `.env.example` to `.env` and fill in your Firebase project values.
+---
 
-### 3. Seed demo data (run once)
+## 📦 Key Features
+
+* 🔁 **FEFO Engine** — First Expiry First Out compliance
+* 📊 Real-time inventory analytics (₹ based)
+* 🧾 Smart billing system
+* 📉 Waste reduction tracking
+* 📍 Physical storage mapping (Row/Shelf/Compartment)
+* 🔔 Intelligent notification system
+* 📄 Exportable reports (PDF/CSV)
+* 🌐 Multi-language support (English + Gujarati)
+* 📡 Offline mode with sync
+
+---
+
+## 🗂️ Database Structure (Firestore)
+
 ```bash
-npm run seed
+hospitals/
+  stores/
+    medicines/
+    batches/
+    dispense_logs/
+    orders/
+    alerts/
+    staff/
+users/
+requisitions/
+notifications/
+ml_forecasts/
 ```
-This will:
-- Clear all existing Firestore data
-- Create / verify all 9 Firebase Auth accounts
-- Create 2 stores, 30 medicines, 42 batches
-- Generate 60+ dispense logs (30 days history), orders, notifications, waste records, audit logs
-
-### 4. Start the app
-```bash
-npm run dev
-```
-Or just double-click **START.bat** and choose option 1 or 2.
 
 ---
 
-## Demo Accounts
+## 🎥 Demo (Coming Soon)
 
-All accounts use password: **`Veda@2026`**
-
-| Email | Role | Access |
-|-------|------|--------|
-| `ubaid@admin.com` | Admin | All stores, all staff, full audit trail |
-| `ubaid1@manager.com` | Manager | Store A + Pharmacists 1, 2, 3 |
-| `ubaid2@manager.com` | Manager | Store B + Pharmacists 4, 5, 6 |
-| `ubaid1@gmail.com` | Pharmacist | Store A (sees manager + own store) |
-| `ubaid2@gmail.com` | Pharmacist | Store A |
-| `ubaid3@gmail.com` | Pharmacist | Store A |
-| `ubaid4@gmail.com` | Pharmacist | Store B (sees manager + own store) |
-| `ubaid5@gmail.com` | Pharmacist | Store B |
-| `ubaid6@gmail.com` | Pharmacist | Store B |
+> UI previews and walkthrough will be added here.
 
 ---
 
-## Role Capabilities
+## 🧠 Why Veda?
 
-### 🛡️ Admin (`ubaid@admin.com`)
-- View both stores and their full inventory
-- See all managers and all 6 pharmacists
-- Approve / reject procurement orders > ₹50,000
-- Raise emergency requisitions
-- Access immutable audit trail (export CSV)
-- Activate / suspend staff accounts
+Unlike traditional systems, Veda is:
 
-### 🏪 Manager (`ubaid1@manager.com` / `ubaid2@manager.com`)
-- Manage their own store's inventory
-- Add medicines, receive stock (new batches)
-- Place and track procurement orders
-- Record waste/disposal
-- View AI demand forecasting & smart order book
-- See alerts for their store's expiries and low stock
-- Export inventory, batch, and waste reports (PDF/CSV)
-
-### 💊 Pharmacist (`ubaid1–6@gmail.com`)
-- View stock with FEFO batch selection
-- Dispense medicines (auto FEFO batch, generates PDF bill)
-- Send reorder reminders to manager
-- AI query assistant ("Which medicines expire this week?")
-- View recent dispense history
+* **Predictive, not reactive**
+* **Data-driven, not manual**
+* **Batch-aware, not just stock-aware**
+* **Designed for real hospital workflows**
 
 ---
 
-## Architecture
+## 📌 Future Enhancements
 
-```
-src/
-├── App.tsx                    # Auth, routing, layout
-├── firebase.ts                # Firebase init
-├── seed.ts                    # Demo data seed script
-├── types/index.ts             # TypeScript interfaces
-├── components/
-│   ├── AdminDashboard.tsx
-│   ├── ManagerDashboard.tsx
-│   └── PharmacistDashboard.tsx
-├── services/
-│   ├── aiService.ts           # Gemini AI (recommendations, forecasting, chat)
-│   ├── auditService.ts        # Immutable audit log writer
-│   ├── exportService.ts       # CSV export
-│   └── pdfService.ts          # PDF bills & inventory reports
-└── hooks/
-    └── useOnlineStatus.ts     # Offline detection
-```
-
-**Firestore Collections:** `users` · `stores` · `medicines` · `batches` · `dispense_logs` · `orders` · `notifications` · `waste_records` · `audit_logs`
+* 🛰️ Integration with government drug warehouses
+* 📱 Mobile app for pharmacists
+* 🧬 Advanced ML models (LSTM forecasting)
+* 🔗 IoT-based smart shelf tracking
 
 ---
 
-## Re-seeding
+## 👨‍💻 Contributors
 
-If you want to reset all data and start fresh:
-```bash
-npm run seed
-```
-This wipes all Firestore collections and recreates everything. Auth accounts are reused (not deleted).
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="25%">
+        <div>
+          <img src="https://avatars.githubusercontent.com/Sam-bot-dev?s=120" width="120px;" height="120px;" alt="Bhavesh"/>
+        </div>
+        <div><strong>🧩 Head Teammate</strong></div>
+        <div><strong>Bhavesh</strong></div>
+        <a href="https://github.com/Sam-bot-dev">🌐 GitHub</a>
+      </td>
+      <td align="center" width="25%">
+        <div>
+          <img src="https://avatars.githubusercontent.com/notUbaid?s=120" width="120px;" height="120px;" alt="Ubaid khan"/>
+        </div>
+        <div><strong>⭐ Team Leader</strong></div>
+        <div><strong>Ubaid khan</strong></div>
+        <a href="https://github.com/niyatijoshi707-ai">🌐 GitHub</a>
+      </td>
+      <td align="center" width="25%">
+        <div>
+          <img src="https://avatars.githubusercontent.com/rhn9999?s=120" width="120px;" height="120px;" alt="Rohan"/>
+        </div>
+        <div><strong>Teammate</strong></div>
+        <div><strong>Kush</strong></div>
+        <a href="https://github.com/rhn9999">🌐 GitHub</a>
+      </td>
+      <td align="center" width="25%">
+        <div>
+          <img src="https://avatars.githubusercontent.com/yuggandhii?s=120" width="120px;" height="120px;" alt="Yug"/>
+        </div>
+        <div><strong>🗄️ Database Head</strong></div>
+        <div><strong>Yug</strong></div>
+        <a href="https://github.com/yuggandhii">🌐 GitHub</a>
+      </td>
+    </tr>
+  </table>
+</p>
 
-> ⚠️ Any data created through the UI will be deleted on re-seed.
+---
+
+## ⭐ Support
+
+If you find this project impactful, consider giving it a ⭐
+and contributing to make healthcare smarter.
+
+---
+
+> *“In healthcare, timing is everything — Veda ensures nothing is left to chance.”*
