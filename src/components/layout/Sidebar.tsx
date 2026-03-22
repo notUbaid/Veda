@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Building2, ShieldCheck, LogOut, X,
   LayoutDashboard, ClipboardList, BarChart3,
-  Users, FileText, Package, Route, Pill,
+  Users, FileText, Package, Route,
   Bell, MessageSquare, UserCircle, AtSign,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -75,12 +75,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="fixed lg:relative z-50 w-72 h-full flex flex-col glass-sidebar"
     >
-      {/* Logo */}
-      <div className="p-6 flex items-center justify-between border-b border-white/5">
+      {/* ── Logo ──────────────────────────────────────── */}
+      <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-            <Pill size={20} className="text-white" />
-          </div>
+          <img
+            src="/asset/Veda.png"
+            alt="Veda logo"
+            className="w-9 h-9 object-contain drop-shadow-lg"
+          />
           <span className="veda-wordmark">VEDA</span>
         </div>
         <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white p-1">
@@ -88,14 +90,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </button>
       </div>
 
-      {/* User card — clickable → profile */}
-      <div className="px-4 py-4">
+      {/* ── User card → profile ───────────────────────── */}
+      <div className="px-4 py-3">
         <NavLink
           to={`${roleBase}/profile`}
           onClick={onClose}
           className={({ isActive }) =>
             `flex items-center gap-3 p-3 rounded-2xl transition-all ${
-              isActive ? 'bg-blue-600/20 border border-blue-500/20' : 'bg-white/5 hover:bg-white/8 border border-transparent'
+              isActive
+                ? 'bg-blue-600/20 border border-blue-500/20'
+                : 'bg-white/5 hover:bg-white/8 border border-transparent'
             }`
           }
         >
@@ -117,18 +121,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </NavLink>
       </div>
 
-      {/* Navigation */}
+      {/* ── Navigation ────────────────────────────────── */}
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-hide pb-4">
 
-        {/* ── Pharmacist ─────────────────────────── */}
+        {/* Pharmacist */}
         {role === 'pharmacist' && (
           <>
-            <NavItem to="/pharmacist"          icon={LayoutDashboard} label="Dashboard"   exact />
-            <NavItem to="/pharmacist/stock"    icon={Package}         label="Stock View"       />
-            <NavItem to="/pharmacist/dispense" icon={ClipboardList}   label="Dispense"          />
-            <NavItem to="/pharmacist/alerts"   icon={Bell}            label="Alerts"            />
-            <NavItem to="/pharmacist/query"    icon={MessageSquare}   label="AI Query"          />
-            <NavItem to="/pharmacist/profile"  icon={UserCircle}      label="My Profile"   badge={altEmailCount > 0 ? altEmailCount : undefined} />
+            <NavItem to="/pharmacist"          icon={LayoutDashboard} label="Dashboard"  exact />
+            <NavItem to="/pharmacist/stock"    icon={Package}         label="Stock View"      />
+            <NavItem to="/pharmacist/dispense" icon={ClipboardList}   label="Dispense"         />
+            <NavItem to="/pharmacist/alerts"   icon={Bell}            label="Alerts"           />
+            <NavItem to="/pharmacist/query"    icon={MessageSquare}   label="AI Query"         />
+            <NavItem to="/pharmacist/profile"  icon={UserCircle}      label="My Profile"
+              badge={altEmailCount > 0 ? altEmailCount : undefined} />
 
             {currentStore && (
               <div className="mt-4 pt-4 border-t border-white/5">
@@ -142,17 +147,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </>
         )}
 
-        {/* ── Manager ────────────────────────────── */}
+        {/* Manager */}
         {role === 'manager' && (
           <>
-            <NavItem to="/manager"               icon={LayoutDashboard} label="Dashboard"      exact />
-            <NavItem to="/manager/stores"        icon={Building2}       label="My Stores"            />
-            <NavItem to="/manager/inventory"     icon={Package}         label="Inventory"            />
-            <NavItem to="/manager/orders"        icon={ClipboardList}   label="Orders"               />
-            <NavItem to="/manager/supply-chain"  icon={Route}           label="Supply Chain"         />
-            <NavItem to="/manager/analytics"     icon={BarChart3}       label="Analytics"            />
-            <NavItem to="/manager/waste"         icon={BarChart3}       label="Waste"                />
-            <NavItem to="/manager/profile"       icon={UserCircle}      label="My Profile"      badge={altEmailCount > 0 ? altEmailCount : undefined} />
+            <NavItem to="/manager"              icon={LayoutDashboard} label="Dashboard"     exact />
+            <NavItem to="/manager/stores"       icon={Building2}       label="My Stores"          />
+            <NavItem to="/manager/inventory"    icon={Package}         label="Inventory"          />
+            <NavItem to="/manager/orders"       icon={ClipboardList}   label="Orders"             />
+            <NavItem to="/manager/supply-chain" icon={Route}           label="Supply Chain"       />
+            <NavItem to="/manager/analytics"    icon={BarChart3}       label="Analytics"          />
+            <NavItem to="/manager/waste"        icon={BarChart3}       label="Waste"              />
+            <NavItem to="/manager/profile"      icon={UserCircle}      label="My Profile"
+              badge={altEmailCount > 0 ? altEmailCount : undefined} />
 
             {stores.length > 1 && (
               <div className="mt-4 pt-4 border-t border-white/5">
@@ -176,28 +182,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </>
         )}
 
-        {/* ── Admin ──────────────────────────────── */}
+        {/* Admin */}
         {role === 'admin' && (
           <>
-            <NavItem to="/admin"               icon={LayoutDashboard} label="Overview"         exact />
-            <NavItem to="/admin/network"       icon={Building2}       label="Network & Stores"       />
-            <NavItem to="/admin/requisitions"  icon={ClipboardList}   label="All Requisitions"       />
-            <NavItem to="/admin/approvals"     icon={ShieldCheck}     label="Pending Approvals"      />
-            <NavItem to="/admin/reports"       icon={BarChart3}       label="Global Reports"         />
-            <NavItem to="/admin/audit"         icon={FileText}        label="Audit Trail"            />
-            <NavItem to="/admin/users"         icon={Users}           label="Users"                  />
-            <NavItem to="/admin/profile"       icon={UserCircle}      label="My Profile"        badge={altEmailCount > 0 ? altEmailCount : undefined} />
+            <NavItem to="/admin"              icon={LayoutDashboard} label="Overview"        exact />
+            <NavItem to="/admin/network"      icon={Building2}       label="Network & Stores"      />
+            <NavItem to="/admin/requisitions" icon={ClipboardList}   label="All Requisitions"      />
+            <NavItem to="/admin/approvals"    icon={ShieldCheck}     label="Pending Approvals"     />
+            <NavItem to="/admin/reports"      icon={BarChart3}       label="Global Reports"        />
+            <NavItem to="/admin/audit"        icon={FileText}        label="Audit Trail"           />
+            <NavItem to="/admin/users"        icon={Users}           label="Users"                 />
+            <NavItem to="/admin/profile"      icon={UserCircle}      label="My Profile"
+              badge={altEmailCount > 0 ? altEmailCount : undefined} />
           </>
         )}
       </nav>
 
-      {/* Footer */}
+      {/* ── Footer ────────────────────────────────────── */}
       <div className="p-4 border-t border-white/5">
         <div className="flex items-center gap-2 px-3 py-2 mb-2">
           {isOnline ? (
-            <><div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /><span className="text-xs text-emerald-500 font-bold">System Online</span></>
+            <>
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-xs text-emerald-500 font-bold">System Online</span>
+            </>
           ) : (
-            <><div className="w-2 h-2 bg-amber-500 rounded-full" /><span className="text-xs text-amber-500 font-bold">Offline Mode</span></>
+            <>
+              <div className="w-2 h-2 bg-amber-500 rounded-full" />
+              <span className="text-xs text-amber-500 font-bold">Offline Mode</span>
+            </>
           )}
         </div>
         <button

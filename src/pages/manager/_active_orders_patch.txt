@@ -1,0 +1,48 @@
+              <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                {activePOs.map(([poId, poOrders]) => {
+                  const meta = STATUS_META[poOrders[0].status] ?? STATUS_META.pending;
+                  const total = poOrders.reduce((s, o) => s + o.totalValue, 0);
+                  const totalQty = poOrders.reduce((s, o) => s + o.quantity, 0);
+                  return (
+                    <div key={poId} className="p-3 rounded-xl bg-white/5 border border-white/5">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-mono text-slate-600">{poId}</span>
+                        <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${meta.bg} ${meta.color}`}>
+                          {meta.label}
+                        </span>
+                      </div>
+
+                      {/* Medicine names — show all if 1, list if multiple */}
+                      {poOrders.length === 1 ? (
+                        <div>
+                          <p className="text-xs font-bold text-white truncate">{poOrders[0].medicineName ?? 'Unknown'}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">Qty: {poOrders[0].quantity} · ₹{poOrders[0].totalValue.toLocaleString('en-IN')}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {poOrders.slice(0, 3).map(o => (
+                            <div key={o.id} className="flex items-center justify-between">
+                              <p className="text-xs font-bold text-white truncate max-w-[140px]">{o.medicineName ?? 'Unknown'}</p>
+                              <p className="text-[10px] text-slate-500 font-mono shrink-0 ml-2">×{o.quantity}</p>
+                            </div>
+                          ))}
+                          {poOrders.length > 3 && (
+                            <p className="text-[10px] text-slate-600">+{poOrders.length - 3} more</p>
+                          )}
+                          <p className="text-[10px] text-emerald-400 font-mono pt-1 border-t border-white/5">
+                            Total: ₹{total.toLocaleString('en-IN')} · {totalQty} units
+                          </p>
+                        </div>
+                      )}
+
+                      {poOrders.length === 1 && (
+                        <p className="text-[10px] text-emerald-400 font-mono mt-0.5">₹{total.toLocaleString('en-IN')}</p>
+                      )}
+
+                      {poOrders[0].approvalStatus === 'pending' && (
+                        <p className="text-[9px] text-amber-400 mt-1.5 flex items-center gap-1">⏳ Awaiting admin approval</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>

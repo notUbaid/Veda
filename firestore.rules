@@ -2,9 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helpers ──────────────────────────────────────────────────────────
-    function uid() { return request.auth.uid; }
-    function authed() { return request.auth != null; }
+    function uid()     { return request.auth.uid; }
+    function authed()  { return request.auth != null; }
 
     function profile() {
       return get(/databases/$(database)/documents/users/$(uid())).data;
@@ -13,14 +12,12 @@ service cloud.firestore {
       return authed() && exists(/databases/$(database)/documents/users/$(uid()));
     }
     function role() { return hasProfile() ? profile().role : ''; }
-    function myStoreId() { return hasProfile() ? profile().storeId : ''; }
 
     function isAdmin()      { return role() == 'admin'; }
     function isManager()    { return role() == 'manager'; }
     function isPharmacist() { return role() == 'pharmacist'; }
     function isStaff()      { return isAdmin() || isManager() || isPharmacist(); }
 
-    // Manager owns a store if they are its managerId
     function managesStore(storeId) {
       return isAdmin() || (
         isManager() &&
@@ -31,8 +28,6 @@ service cloud.firestore {
 
     // ── /users ────────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Everyone can read their own profile.
-      // Admin reads all. Manager/Pharmacist read any user — frontend filters.
       allow read:   if authed();
       allow create: if authed() && (isAdmin() || uid() == userId);
       allow update: if isAdmin() || uid() == userId;
@@ -49,9 +44,7 @@ service cloud.firestore {
 
     // ── /medicines ────────────────────────────────────────────────────────
     match /medicines/{medicineId} {
-      // All authenticated users can read (frontend filters by storeId).
       allow read:   if authed();
-      // Admin: any store. Manager: only their store. Pharmacist: read only.
       allow create: if isAdmin() || isManager();
       allow update: if isAdmin() || isManager();
       allow delete: if isAdmin() || isManager();
@@ -60,24 +53,24 @@ service cloud.firestore {
     // ── /batches ──────────────────────────────────────────────────────────
     match /batches/{batchId} {
       allow read:   if authed();
-      // Pharmacist can update (decrement quantity on dispense).
-      // Manager can create / update / delete.
+      // Manager can CREATE batches (delivery flow adds new batch to inventory)
       allow create: if isAdmin() || isManager();
-      allow update: if authed(); // pharmacist decrements qty
+      // Pharmacist can UPDATE quantity (dispense decrements), manager can update location/expiry
+      allow update: if authed();
       allow delete: if isAdmin() || isManager();
     }
 
     // ── /dispense_logs ────────────────────────────────────────────────────
     match /dispense_logs/{logId} {
       allow read:   if authed();
-      allow create: if authed(); // pharmacist creates
-      // Logs are immutable — no update or delete
+      allow create: if authed();
+      // Immutable
     }
 
     // ── /orders ───────────────────────────────────────────────────────────
     match /orders/{orderId} {
       allow read:   if authed();
-      allow create: if authed(); // manager or admin
+      allow create: if authed();
       allow update: if isAdmin() || isManager();
       allow delete: if isAdmin();
     }
@@ -94,7 +87,7 @@ service cloud.firestore {
     match /audit_logs/{logId} {
       allow read:   if isAdmin() || isManager();
       allow create: if authed();
-      // Immutable — no update or delete
+      // Immutable
     }
 
     // ── /waste_records ────────────────────────────────────────────────────

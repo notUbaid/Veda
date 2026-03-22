@@ -9,10 +9,10 @@ import { Medicine, Batch } from '../../types';
 import {
   Search, Plus, Minus, CheckCircle2, Package,
   MapPin, X, AlertTriangle, FileText, Pill,
-  ShoppingBag, RefreshCw
+  ShoppingBag, RefreshCw, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 import { writeAudit } from '../../services/auditService';
 import { generateDispenseBill } from '../../services/pdfService';
 import { emailDispenseConfirm } from '../../services/emailService';
@@ -69,7 +69,10 @@ export function DispensePage() {
   const [batches, setBatches] = useState<Batch[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [expandedMed, setExpandedMed] = useState<string | null>(null);
+
   const [selectedMed, setSelectedMed] = useState<Medicine | null>(null);
   const [qty, setQty] = useState(1);
 
@@ -93,15 +96,18 @@ export function DispensePage() {
     return () => { u1(); u2(); };
   }, [currentStore]);
 
-  const searchResults = useMemo(() => {
-    if (searchQuery.length < 2) return [];
+  const categories = ['All', ...Array.from(new Set(medicines.map(m => m.category).filter(Boolean))).sort()];
+
+  const inventoryMedicines = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return medicines.filter(m =>
-      m.name.toLowerCase().includes(q) ||
-      (m.genericName || '').toLowerCase().includes(q) ||
-      (m.category || '').toLowerCase().includes(q)
-    ).slice(0, 8);
-  }, [searchQuery, medicines]);
+    return medicines.filter(m => {
+      const matchSearch =
+        m.name.toLowerCase().includes(q) ||
+        (m.genericName || '').toLowerCase().includes(q) ||
+        (m.category || '').toLowerCase().includes(q);
+      return matchSearch && (categoryFilter === 'All' || m.category === categoryFilter);
+    });
+  }, [searchQuery, categoryFilter, medicines]);
 
   const fefoSim = useMemo(() => {
     if (!selectedMed) return null;
@@ -115,9 +121,8 @@ export function DispensePage() {
 
   const handleSelectMed = (med: Medicine) => {
     setSelectedMed(med);
-    setSearchQuery('');
-    setShowDropdown(false);
     setQty(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAddToBill = () => {
@@ -151,6 +156,7 @@ export function DispensePage() {
     }
     setSelectedMed(null);
     setQty(1);
+    setSearchQuery('');
   };
 
   const handleConfirmDispense = async () => {
@@ -204,7 +210,7 @@ export function DispensePage() {
         })),
         patientRef || 'N/A'
       );
-      // Email receipt to pharmacist (primary + alternate emails)
+      // Email receipt to pharmacist
       emailDispenseConfirm({
         recipientName:   profile.name,
         recipientEmails: getRecipientEmails(profile),
@@ -249,75 +255,25 @@ export function DispensePage() {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-5 gap-5 items-start">
 
-      {/* LEFT: Search + item builder */}
-      <div className="xl:col-span-3 space-y-4">
-
-        {/* Search panel */}
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <Pill size={15} className="text-blue-400" /> Add Medicine to Bill
-          </h3>
-          <div className="relative z-20">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
-            <input
-              type="text"
-              placeholder="Search by name, generic, or category..."
-              className="glass-input w-full pl-9 py-2.5 text-sm"
-              value={searchQuery}
-              onChange={e => { setSearchQuery(e.target.value); setShowDropdown(true); }}
-              onFocus={() => setShowDropdown(true)}
-            />
-            <AnimatePresence>
-              {showDropdown && searchQuery.length > 1 && !selectedMed && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
-                  className="absolute left-0 right-0 top-full mt-1 rounded-2xl overflow-hidden shadow-2xl z-50"
-                  style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }}
-                >
-                  {searchResults.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-5">No medicines match</p>
-                  ) : searchResults.map(m => {
-                    const stock = sortFEFO(batches.filter(b => b.medicineId === m.id)).reduce((s, b) => s + b.quantity, 0);
-                    const isLow = stock < m.reorderThreshold;
-                    return (
-                      <button key={m.id} onClick={() => handleSelectMed(m)}
-                        className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 flex items-center justify-between gap-4"
-                      >
-                        <div>
-                          <p className="font-bold text-sm text-white">{m.name}</p>
-                          <p className="text-xs text-slate-500">{m.genericName} · {m.category}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm font-mono font-bold text-emerald-400">₹{m.unitPrice}</p>
-                          <p className={`text-[10px] font-bold ${isLow ? 'text-red-400' : 'text-slate-500'}`}>
-                            {stock} {m.unit}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+      {/* LEFT: Item Builder & Inventory Grid */}
+      <div className="xl:col-span-3 space-y-5">
 
         {/* Selected medicine form */}
         <AnimatePresence>
           {selectedMed && (
             <motion.div
-              initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-              className="rounded-2xl p-4"
+              initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -6, height: 0 }}
+              className="rounded-2xl p-5 mb-5 overflow-hidden"
               style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)' }}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Selected</p>
+                  <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Selected for Cart</p>
                   <h4 className="font-bold text-lg text-white leading-tight">{selectedMed.name}</h4>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {selectedMed.genericName} · <span className="text-emerald-400 font-bold">₹{selectedMed.unitPrice}</span>/{selectedMed.unit}
                     <span className={`ml-3 font-bold ${selectedMedTotalStock < selectedMed.reorderThreshold ? 'text-amber-400' : 'text-slate-400'}`}>
-                      ({selectedMedTotalStock} available)
+                      ({selectedMedTotalStock} total available)
                     </span>
                   </p>
                 </div>
@@ -327,21 +283,21 @@ export function DispensePage() {
               </div>
 
               {/* Qty */}
-              <div className="mb-3">
+              <div className="mb-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Quantity ({selectedMed.unit})</label>
                 <div className="flex items-center gap-2">
                   <button onClick={() => setQty(Math.max(1, qty - 1))}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all font-bold text-slate-300"
                     style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <Minus size={15} />
+                    <Minus size={16} />
                   </button>
                   <input type="number" min={1} value={qty}
                     onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="flex-1 glass-input text-center font-mono font-bold text-lg py-1.5" />
+                    className="flex-1 glass-input text-center font-mono font-bold text-lg py-2" />
                   <button onClick={() => setQty(qty + 1)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all font-bold text-slate-300"
                     style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <Plus size={15} />
+                    <Plus size={16} />
                   </button>
                 </div>
               </div>
@@ -360,7 +316,7 @@ export function DispensePage() {
                   ) : (
                     <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">FEFO Batches</span>
+                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Batches to be Extracted (FEFO)</span>
                         <div className="flex items-center gap-1 text-emerald-400">
                           <CheckCircle2 size={11} /><span className="text-[10px] font-bold">Compliant</span>
                         </div>
@@ -387,7 +343,7 @@ export function DispensePage() {
                                     {daysLeft}d
                                   </span>
                                 )}
-                                <span className="font-mono font-bold text-white text-xs">{b.quantity}</span>
+                                <span className="font-mono font-bold text-emerald-400 text-sm">{b.quantity}</span>
                               </div>
                             </div>
                           );
@@ -398,20 +354,142 @@ export function DispensePage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <div>
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest">Line Total</p>
-                  <p className="text-lg font-mono font-bold text-white">₹{(qty * selectedMed.unitPrice).toLocaleString('en-IN')}</p>
+                  <p className="text-xl font-mono font-bold text-white">₹{(qty * selectedMed.unitPrice).toLocaleString('en-IN')}</p>
                 </div>
                 <button onClick={handleAddToBill}
                   disabled={!fefoSim || fefoSim.remaining > 0 || fefoSim.assigned.length === 0}
-                  className="glass-button-primary px-6 py-2.5 text-sm disabled:opacity-40">
+                  className="glass-button-primary px-8 py-3 font-bold disabled:opacity-40">
                   + Add to Bill
                 </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Filter Toolbar */}
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input
+              type="text"
+              placeholder="Search by name, generic, or category..."
+              className="glass-input w-full pl-11 py-3 text-sm"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryMenu(v => !v)}
+              className="h-full px-4 glass-button-secondary flex items-center gap-2 text-sm"
+            >
+              {categoryFilter === 'All' ? 'All Categories' : categoryFilter}
+              <ChevronDown size={13} />
+            </button>
+            <AnimatePresence>
+              {showCategoryMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  className="absolute right-0 top-full mt-2 w-48 glass-panel p-2 z-50 space-y-1 shadow-2xl"
+                >
+                  {categories.map(cat => (
+                    <button key={cat}
+                      onClick={() => { setCategoryFilter(cat); setShowCategoryMenu(false); }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        categoryFilter === cat
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Inventory Tabs Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {inventoryMedicines.map(med => {
+            const medBatches = sortFEFO(batches.filter(b => b.medicineId === med.id));
+            const totalStock = medBatches.reduce((a, b) => a + b.quantity, 0);
+            const firstBatch = medBatches[0];
+            const isLow = totalStock < med.reorderThreshold;
+            const isExpanded = expandedMed === med.id;
+
+            return (
+              <div key={med.id}
+                className={`glass-card flex flex-col overflow-hidden border ${isLow ? 'border-amber-500/20' : 'border-white/10'}`}>
+                <div 
+                  className="p-4 flex-1 cursor-pointer hover:bg-white/5 transition-colors"
+                  onClick={() => handleSelectMed(med)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">{med.category}</p>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                      isLow ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'
+                    }`}>
+                      {isLow ? <AlertTriangle size={10} /> : <CheckCircle2 size={10} />}
+                      {isLow ? 'Low Stock' : 'Safe'}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-base text-white leading-tight mb-0.5">{med.name}</h3>
+                  <p className="text-xs text-slate-500 font-mono mb-3 truncate">{med.genericName}</p>
+
+                  <div className="flex items-center justify-between mt-auto">
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">Stock</p>
+                      <p className="font-mono font-bold text-white text-sm">{totalStock} <span className="text-xs font-sans font-normal text-slate-400">{med.unit}</span></p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest text-right">Price</p>
+                      <p className="font-mono font-bold text-emerald-400 text-sm">₹{med.unitPrice}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Optional Batch toggler */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setExpandedMed(isExpanded ? null : med.id); }}
+                  className="w-full py-2 bg-white/5 hover:bg-white/10 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-white/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  {isExpanded ? 'Hide Batches' : `${medBatches.length} Batch${medBatches.length !== 1 ? 'es' : ''}`}
+                  <ChevronDown size={12} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden border-t border-white/10"
+                    >
+                      <div className="divide-y divide-white/5">
+                        {medBatches.map((batch, idx) => (
+                          <div key={batch.id} className={`px-3 py-2 flex items-center justify-between ${idx === 0 ? 'bg-blue-500/5' : 'bg-navy-950/30'}`}>
+                            <span className="font-mono text-xs font-bold text-white">{batch.batchNumber}</span>
+                            <span className="font-mono text-xs text-slate-400">Qty: {batch.quantity}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+          {inventoryMedicines.length === 0 && (
+            <div className="col-span-full py-20 text-center opacity-50">
+              <Pill size={32} className="mx-auto text-slate-500 mb-3" />
+              <p className="text-white font-bold">No medicines found</p>
+            </div>
+          )}
+        </div>
 
         {/* Mobile bill */}
         <div className="xl:hidden">
@@ -423,7 +501,7 @@ export function DispensePage() {
       </div>
 
       {/* RIGHT: Bill (desktop) */}
-      <div className="xl:col-span-2 hidden xl:block">
+      <div className="xl:col-span-2 hidden xl:block sticky top-6">
         <BillPanel billId={billId} billItems={billItems} patientRef={patientRef}
           setPatientRef={setPatientRef} totalBillValue={totalBillValue} dispensing={dispensing}
           onRemoveItem={id => setBillItems(prev => prev.filter(i => i.id !== id))}
@@ -442,84 +520,87 @@ interface BillPanelProps {
 
 function BillPanel({ billId, billItems, patientRef, setPatientRef, totalBillValue, dispensing, onRemoveItem, onClear, onConfirm }: BillPanelProps) {
   return (
-    <div className="flex flex-col rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '460px' }}>
+    <div className="flex flex-col rounded-2xl overflow-hidden glass-panel"
+      style={{ minHeight: '520px', maxHeight: 'calc(100vh - 120px)' }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
-          <ShoppingBag size={14} className="text-blue-400" />
-          <span className="font-bold text-sm text-white">Dispense Bill</span>
-          <span className="text-[9px] font-mono text-slate-600">{billId}</span>
+          <ShoppingBag size={16} className="text-blue-400" />
+          <span className="font-bold text-base text-white">Dispense Bill</span>
+          <span className="text-[10px] font-mono text-slate-500 ml-1">{billId}</span>
         </div>
-        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-          style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
-          <CheckCircle2 size={10} className="text-emerald-400" />
-          <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">FEFO</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircle2 size={12} className="text-emerald-400" />
+          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">FEFO Active</span>
         </div>
       </div>
 
       {/* Patient ref */}
-      <div className="px-4 pt-3 pb-2">
-        <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
-          Patient / Rx Reference
+      <div className="px-5 pt-4 pb-2">
+        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">
+          Patient Name / Rx Reference
         </label>
         <input type="text"
-          className="glass-input w-full py-2 text-sm"
-          placeholder="OPD-12345 or name"
+          className="glass-input w-full py-2.5 text-sm"
+          placeholder="e.g. John Doe or OPD-9921"
           value={patientRef}
           onChange={e => setPatientRef(e.target.value)}
         />
       </div>
 
       {/* Items */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1.5 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2 scrollbar-hide">
         {billItems.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center opacity-30 py-8">
-            <Package size={28} className="text-slate-500 mb-2" />
-            <p className="text-slate-400 text-sm font-bold">Empty</p>
-            <p className="text-xs text-slate-600 mt-0.5">Add medicines on the left</p>
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-40 py-10">
+            <Package size={36} className="text-slate-500 mb-3" />
+            <p className="text-white text-base font-bold">Cart is Empty</p>
+            <p className="text-xs text-slate-500 mt-1">Click medicines on the left to add</p>
           </div>
         ) : billItems.map(item => (
           <div key={item.id}
-            className="px-3 py-2.5 rounded-xl group relative"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            className="px-4 py-3 rounded-xl group relative glass-card">
             <button onClick={() => onRemoveItem(item.id)}
-              className="absolute top-2 right-2 text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-              <X size={13} />
+              className="absolute top-2.5 right-2.5 text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 bg-red-500/10 p-1.5 rounded-lg">
+              <X size={14} />
             </button>
-            <div className="flex items-start justify-between pr-5">
-              <p className="font-bold text-sm text-white truncate">{item.medicineName}</p>
-              <p className="font-mono font-bold text-emerald-400 text-sm shrink-0 ml-2">₹{item.lineTotal.toLocaleString('en-IN')}</p>
+            <div className="flex items-start justify-between pr-8 mb-1">
+              <p className="font-bold text-sm text-white leading-tight">{item.medicineName}</p>
             </div>
-            <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-              {item.quantity} {item.unit} × ₹{item.unitPrice} · {item.fefoAssignedBatches.map(b => b.batchNumber).join(', ')}
-            </p>
+            <div className="flex items-end justify-between mt-2">
+              <p className="text-xs text-slate-400 font-mono leading-relaxed">
+                {item.quantity} {item.unit} × ₹{item.unitPrice}
+                <br/>
+                <span className="text-[9px] text-slate-500">Batches: {item.fefoAssignedBatches.map(b => b.batchNumber).join(', ')}</span>
+              </p>
+              <p className="font-mono font-bold text-emerald-400 text-sm">₹{item.lineTotal.toLocaleString('en-IN')}</p>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="px-5 py-4 space-y-4" style={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[9px] text-slate-500 uppercase tracking-widest">{billItems.length} item{billItems.length !== 1 ? 's' : ''}</p>
-            <p className="text-xl font-mono font-bold text-white">₹{totalBillValue.toLocaleString('en-IN')}</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest">{billItems.length} item{billItems.length !== 1 ? 's' : ''}</p>
+            <p className="text-2xl font-mono font-bold text-white mt-1">₹{totalBillValue.toLocaleString('en-IN')}</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-            <FileText size={11} /> PDF + email on confirm
+          <div className="flex flex-col items-end gap-1 text-[10px] font-bold text-slate-500">
+            <span className="flex items-center gap-1.5"><FileText size={12} className="text-slate-400" /> Generates PDF Auto-Download</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 size={12} className="text-emerald-500" /> Reduces Firebase Stock</span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button onClick={onClear} disabled={billItems.length === 0}
-            className="px-3 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-red-400 transition-colors disabled:opacity-30"
+            className="px-4 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-red-400 transition-colors disabled:opacity-30"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)' }}>
             Clear
           </button>
           <button onClick={onConfirm} disabled={billItems.length === 0 || dispensing}
-            className="flex-1 glass-button-primary py-2.5 text-sm font-bold disabled:opacity-40">
+            className="flex-1 glass-button-primary py-3 text-sm font-bold shadow-xl shadow-blue-500/20 disabled:opacity-40 disabled:shadow-none">
             {dispensing
-              ? <span className="flex items-center justify-center gap-2"><RefreshCw size={13} className="animate-spin" /> Processing...</span>
+              ? <span className="flex items-center justify-center gap-2"><RefreshCw size={15} className="animate-spin" /> Processing...</span>
               : 'Confirm & Dispense'
             }
           </button>

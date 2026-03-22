@@ -5,8 +5,11 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  const ollamaUrl = env.VITE_OLLAMA_URL || 'http://localhost:11434';
+
   return {
     plugins: [react(), tailwindcss()],
+
     define: {
       'process.env.GEMINI_API_KEY':               JSON.stringify(env.GEMINI_API_KEY),
       'process.env.FIREBASE_API_KEY':             JSON.stringify(env.FIREBASE_API_KEY),
@@ -20,9 +23,22 @@ export default defineConfig(({ mode }) => {
       'process.env.EMAILJS_TEMPLATE_ID':          JSON.stringify(env.EMAILJS_TEMPLATE_ID),
       'process.env.EMAILJS_PUBLIC_KEY':           JSON.stringify(env.EMAILJS_PUBLIC_KEY),
     },
+
     resolve: {
       alias: { '@': path.resolve(__dirname, '.') },
     },
-    server: { port: 5173, hmr: true },
+
+    server: {
+      port: 5173,
+      hmr: true,
+      // Proxy /ollama/* → local Ollama, bypassing browser CORS restrictions
+      proxy: {
+        '/ollama': {
+          target: ollamaUrl,
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/ollama/, ''),
+        },
+      },
+    },
   };
 });

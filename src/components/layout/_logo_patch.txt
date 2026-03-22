@@ -1,0 +1,14 @@
+      {/* Logo */}
+      <div className="p-5 flex items-center justify-between border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <img
+            src="/asset/Veda.png"
+            alt="Veda"
+            className="w-9 h-9 object-contain drop-shadow-lg"
+          />
+          <span className="veda-wordmark">VEDA</span>
+        </div>
+        <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white p-1">
+          <X size={20} />
+        </button>
+      </div>

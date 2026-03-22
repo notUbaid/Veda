@@ -4,11 +4,6 @@ build/
 .DS_Store
 *.log
 
-# Environment — never commit
-.env
-.env.local
-.env.production
-
 # Firebase config with real keys — use .env instead
 firebase-applet-config.json
 

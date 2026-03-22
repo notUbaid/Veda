@@ -35,6 +35,7 @@ export interface Medicine {
   supplier: string;
   storeId: string;
   isActive: boolean;
+  createdAt?: string;
 }
 
 export interface Batch {
@@ -55,6 +56,9 @@ export interface Batch {
   receivedAt: string;
   isDepleted: boolean;
   isDisposed: boolean;
+  // Traceability — set when batch is created from a delivered purchase order
+  sourcePurchaseOrderId?: string;
+  sourceOrderId?: string;
 }
 
 export interface DispenseLog {
@@ -75,11 +79,30 @@ export interface DispenseLog {
   batchesUsed?: { batchId: string; batchNumber: string; quantity: number; location?: string }[];
 }
 
+/** One medicine line inside a cart-based purchase order */
+export interface OrderLineItem {
+  medicineId: string;
+  medicineName: string;
+  genericName: string;
+  quantity: number;
+  unitPrice: number;
+  unit: string;
+  supplier: string;
+  lineTotal: number;
+}
+
 export interface Order {
   id: string;
   storeId: string;
-  medicineId: string;
-  medicineName?: string;           // written at creation for offline display
+  storeName?: string;
+
+  // Purchase Order grouping key — all cart lines share one PO id
+  purchaseOrderId?: string;
+
+  // Per-medicine fields (one Order doc = one medicine)
+  medicineId?: string;
+  medicineName?: string;
+
   quantity: number;
   unitPrice: number;
   totalValue: number;
@@ -94,6 +117,10 @@ export interface Order {
   approvedBy?: string;
   approvedAt?: string;
   type?: 'requisition' | 'procurement';
+  notes?: string | null;
+
+  // Set true when batch was created in Firestore on delivery
+  inventoryAdded?: boolean;
 }
 
 export interface Notification {
@@ -126,12 +153,15 @@ export interface WasteRecord {
   id: string;
   storeId: string;
   medicineId: string;
+  medicineName?: string;  // denormalised at write time
   batchId: string;
+  batchNumber?: string;   // denormalised at write time
   quantity: number;
   wasteValue: number;
   reason: string;
   recordedAt: string;
   recordedBy?: string;
+  recordedByName?: string;
 }
 
 export interface MLForecast {
