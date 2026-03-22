@@ -72,7 +72,7 @@ All accounts use password: **`Veda@2026`**
 
 ### 💊 Pharmacist (`ubaid1–6@gmail.com`)
 - View stock with FEFO batch selection
-- Dispense medicines (auto FEFO batch, generates PDF bill)
+- Dispense medicines (auto FEFO batch and generates PDF bill)
 - Send reorder reminders to manager
 - AI query assistant ("Which medicines expire this week?")
 - View recent dispense history
